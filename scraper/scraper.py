@@ -74,4 +74,3 @@ def indeed_spider():
 indeed_spider()
 
 
-# indeed_api_boi(client_id='c68ae0fd714ba7dff5a264d1555be93dcb3b71d0746c11a9f838824b729ab178', client_secret='rHpoq9ubHp3CXWU9pLREd1RSNkTNRFoi6DG5aXikwFPxGek8vkiYVEgofQ4Sfm33')
