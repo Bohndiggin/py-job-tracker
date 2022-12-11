@@ -9,24 +9,26 @@ Program to track / manage job search. Could grow to include database of frequent
 3. Checkpoints / Trackable states
     - Ability to track progress
     - Ability to close jobs
-3. Company Info
+4. Company Info
     - Goals / Motto
     - Industry
     - Website link
-4. Job Description
+5. Job Description
     - Tasks
     - General description
     - Notes
     - Tech stack
-5. Salary given / Estimate / Industry range
-6. Place to store your Minimum Viable salary
+6. Salary given / Estimate / Industry range
+7. Place to store your Minimum Viable salary
+8. Who to reach out to
+9. Next steps for each application
 
 ## Nice to Have:
 
 1. Machine Learning Natural Language Processing to extract important info.
     - Works by letting you just copy-paste job description
-2. Cover letter Writer
-3. Outreach writer
+2. Cover letter Writer / Template Filler
+3. Outreach writer / Template Filler
 4. Company database of frequent hireing processes.
 
 
@@ -38,4 +40,13 @@ Program to track / manage job search. Could grow to include database of frequent
     - NLTK
     - Numpy
     - Pandas
-    - 
+    - Beautiful Soup
+
+# PLAN
+
+1. Web-Scraper
+    - find what data fields you want
+    - make db in SQLite
+2. analysis
+3. Book
+4. ML model
