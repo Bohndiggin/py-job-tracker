@@ -50,3 +50,13 @@ Program to track / manage job search. Could grow to include database of frequent
 2. analysis
 3. Book
 4. ML model
+
+# STAGES
+Let's figure out what the stages of the job application process are.
+
+1. Apply
+2. Reach Out
+3. Interview - Need to be able to delete jobs you didn't get reached out with
+4. Thank for interview. -MULTIPLE INTERVIEWS??
+5. Offer recieved
+6. Accepted.
