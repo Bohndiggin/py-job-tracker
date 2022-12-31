@@ -8,6 +8,17 @@ import seaborn as sns
 from matplotlib.backend_bases import key_press_handler
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
+import csv
+import spacy
+from spacy.matcher import PhraseMatcher
+
+spacy.prefer_gpu()
+nlp = spacy.load("en_core_web_sm")
+skills = 'jz_skill_patterns.jsonl'
+
+matcher = PhraseMatcher(nlp.vocab)
+
+ruler = nlp.add_pipe("entity_ruler", before='ner').from_disk('./jz_skill_patterns.jsonl')
 
 version_num = 0.01
 
@@ -44,10 +55,8 @@ class Job:
         self.description = description
         self.company = company
         self.salary = kwargs.get('salary', None)
-        self.skills = []
+        self.skills = skills
         self.frame = frame
-        for i in skills:
-            self.skills.append(Skill(self.id, i))
         self.task_list = []
         self.task_complete_dict = {}
         self.task_values = {}
@@ -106,6 +115,7 @@ def weight_assign( object, x=1, y=1):
         object.columnconfigure(i, weight=x)
     for j in range(size[1]):
         object.rowconfigure(j, weight=y)
+        
 class MainWindow:
     def __init__(self, root) -> None:
         self.main_frame = ttk.Frame(root)
@@ -155,9 +165,13 @@ class MainWindow:
         self.job_desc_search_frame = ttk.Labelframe(self.main_frame, text="Job Description")
         self.job_desc_search_frame.grid(column=2, row=1, sticky=(N, S, E, W))
         self.searched_desc = StringVar()
-        self.job_desc_disp = ttk.Label(self.job_desc_search_frame, textvariable=self.searched_desc)
+        self.job_desc_disp = ttk.Label(self.job_desc_search_frame, textvariable=self.searched_desc, wraplength=500)
         self.job_desc_disp.grid(column=0, row=0, sticky=(N, S, E, W))
         self.searched_desc.set('Something')
+        self.job_desc_scroll_bar = ttk.Scrollbar(self.job_desc_search_frame, orient='vertical', command=self.job_desc_disp.yview)
+        self.job_desc_scroll_bar.grid(column=1, row=0, sticky=NSEW)
+        self.job_desc_disp['yscrollcommand'] = self.job_desc_scroll_bar.set
+
 
         # CONTROLS FOR INPUT # Column 0, Row 2
 
@@ -170,7 +184,7 @@ class MainWindow:
 
         self.next_steps_controls_frame = ttk.Labelframe(self.main_frame, text='Next Steps Controls')
         self.next_steps_controls_frame.grid(column=1, row=2, sticky=(N, S, E, W))
-        self.next_steps_controls_add_task_btn = ttk.Button(self.next_steps_controls_frame, text='Add Task', command=placeholder_command)
+        self.next_steps_controls_add_task_btn = ttk.Button(self.next_steps_controls_frame, text='Add Task', command=self.task_add_btn)
         self.next_steps_controls_add_task_btn.grid(column=0, row=0, sticky=NSEW)
         self.next_steps_controls_remove_task_btn = ttk.Button(self.next_steps_controls_frame, text='Remove Task', command=placeholder_command)
         self.next_steps_controls_remove_task_btn.grid(column=1, row=0, sticky=NSEW)
@@ -184,7 +198,18 @@ class MainWindow:
         new_job = Job('coder', 'be coder boiiii', 'apple', ['yoga', 'putting up with crap'], self.next_steps_frame, self.jobs_var, self.jobs_listbox)
         new_job2 = Job('coder', 'be coder boiiii', 'apple', ['yoga', 'putting up with crap'], self.next_steps_frame, self.jobs_var, self.jobs_listbox, salary=250000)
         new_job3 = Job('coder', 'be coder boiiii', 'apple', ['yoga', 'putting up with crap'], self.next_steps_frame, self.jobs_var, self.jobs_listbox)
-    
+
+        root.option_add('*tearOff', FALSE)
+        menubar = Menu(root)
+        root['menu'] = menubar
+        menu_file = Menu(menubar)
+        menu_edit = Menu(menubar)
+        menubar.add_cascade(menu=menu_file, label='File')
+        menubar.add_cascade(menu=menu_edit, label='Edit')
+        menu_file.add_command(label='New', command=placeholder_command)
+        menu_file.add_command(label='Open...', command=placeholder_command)
+        menu_file.add_command(label='Save', command=save_data)
+
     def weight_assign(self, object, x=1, y=1):
         size = object.grid_size()
         for i in range(size[0]):
@@ -193,6 +218,40 @@ class MainWindow:
             object.rowconfigure(j, weight=y)
     def job_add_window(self):
         ja_window = JobAddWindow(self)
+    def task_add_btn(self):
+        TaskAddWindow(momma=self)
+
+class TaskAddWindow():
+    def __init__(self, momma) -> None:  
+        self.taw = Toplevel()
+        self.taw.title(f"Py Job Search {version_num} (TASK ADD)")
+        # self.taw.minsize(500, 300)
+        self.taw.columnconfigure(0, weight=1)
+        self.taw.rowconfigure(0, weight=1)
+
+        self.momma = momma
+
+        self.taw_frame = ttk.Frame(self.taw)
+        self.taw_frame.grid(column=0, row=0, sticky=NSEW)
+
+        self.taw_task_add_label = ttk.Label(self.taw_frame, text="Add Task:")
+        self.taw_task_add_label.grid(column=0, row=0, sticky=NSEW)
+
+        self.task_to_add = StringVar()
+
+        self.taw_task_add_entry = ttk.Entry(self.taw_frame, textvariable=self.task_to_add)
+        self.taw_task_add_entry.grid(column=1, row=0, sticky=NSEW)
+
+        self.taw_task_add_btn = ttk.Button(self.taw_frame, text='Add', command=placeholder_command)
+        self.taw_task_add_btn.grid(column=2, row=0, sticky=NSEW)
+
+        self.taw_cancel_button = ttk.Button(self.taw_frame, text='Cancel', command=self.close_taw)
+        self.taw_cancel_button.grid(column=3, row=0, sticky=NSEW)
+
+    def close_taw(self):
+        self.taw.destroy()
+
+
 
 def placeholder_command():
     pass
@@ -257,15 +316,22 @@ class JobAddWindow():
     def job_add_button_clicked(self):
         # Entity Extraction here
         desc = self.job_desc_input_text.get('1.0', 'end')
-        tokens = nltk.word_tokenize(desc)
-        print(tokens)
-        tagged = nltk.pos_tag(tokens)
-        print(tagged)
+        doc = nlp(text=desc)
+        labels = [(ent.text, ent.label_) for ent in doc.ents]
+        skills = [ent for ent in labels if ent[1] == 'SKILL']
+        skill_objs = [Skill(len(jobs), ent[0]) for ent in skills]
         # job_add_reply(ja_title.get(), job_desc_input_text.get('1.0', 'end'), ja_job_company.get(), skills=['nothing yet'])
-        Job(self.ja_title.get(), self.job_desc_input_text.get('1.0', 'end'), self.ja_job_company_entry.get(), skills=['nothing yet'], frame=self.momma.next_steps_frame, jobs_var=self.momma.jobs_var, jobs_listbox=self.momma.jobs_listbox)
+        Job(self.ja_title.get(), self.job_desc_input_text.get('1.0', 'end'), self.ja_job_company_entry.get(), skills=skill_objs, frame=self.momma.next_steps_frame, jobs_var=self.momma.jobs_var, jobs_listbox=self.momma.jobs_listbox)
+        print(jobs[len(jobs)-1].skills)
 
     def close_ja_window(self):
         self.ja.destroy()
 
 
-
+def save_data():
+    filename = filedialog.asksaveasfilename(initialfile='job_search.csv', defaultextension=".csv",filetypes=[("All Files","*.*"),("Comma-Seperated Values","*.csv")])
+    with open(filename, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile, quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        writer.writerow(['Title', 'Description', 'Company', 'Salary', 'Skills', 'Tasks'])
+        for i in jobs:
+            writer.writerow([i.title, i.description, i.company, i.salary, i.skills, i.task_list])

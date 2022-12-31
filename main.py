@@ -34,10 +34,6 @@ def setup():
     main_window.weight_assign(main_window.job_desc_search_frame)
     main_window.weight_assign(main_window.next_steps_controls_frame)
     main_window.weight_assign(main_window.add_jobs_btn_frame)
-    
-    
-# def job_add_reply(title, desc, company, skills):
-#     new_boi = Job(title=title, description=desc, company=company, skills=skills, frame=next_steps_frame, jobs_var=jobs_var, jobs_listbox=jobs_listbox)
 
 if __name__ == "__main__":
     setup()
