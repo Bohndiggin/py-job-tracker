@@ -1,6 +1,3 @@
-import nltk
-import os
-import sys
 from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog
@@ -11,6 +8,7 @@ from matplotlib.figure import Figure
 import csv
 import spacy
 from spacy.matcher import PhraseMatcher
+import json
 
 spacy.prefer_gpu()
 nlp = spacy.load("en_core_web_sm")
@@ -96,12 +94,13 @@ class Skill:
     def __repr__(self) -> str:
         return f'{self.name} is a skill needed for Job {self.job_id}'
 
-def update_info(id, searched_desc, title_disp_var, company_name_var, salary_disp_var):
+def update_info(id, job_desc_disp, title_disp_var, company_name_var, salary_disp_var):
     indx = id[0]
     for i in jobs:
         i.hide_tasks()
     jobs[indx].show_tasks()
-    searched_desc.set(jobs[indx].description)
+    job_desc_disp.delete('1.0', 'end')
+    job_desc_disp.insert('1.0', jobs[indx].description)
     title_disp_var.set(jobs[indx].title)
     company_name_var.set(jobs[indx].company)
     if jobs[indx]:
@@ -153,7 +152,7 @@ class MainWindow:
         self.jobs_listbox_frame.grid(column=0, row=1, sticky=NSEW)
         self.jobs_listbox = Listbox(self.jobs_listbox_frame, height=15, listvariable=self.jobs_var)
         self.jobs_listbox.grid(column=0, row=0, sticky=NSEW)
-        self.jobs_listbox.bind('<<ListboxSelect>>', lambda e: update_info(self.jobs_listbox.curselection(), self.searched_desc, self.title_disp_var, self.company_name_var, self.salary_disp_var))
+        self.jobs_listbox.bind('<<ListboxSelect>>', lambda e: update_info(self.jobs_listbox.curselection(), self.job_desc_disp, self.title_disp_var, self.company_name_var, self.salary_disp_var))
 
         # NEXT STEPS SECTION # Column 1, row 1
 
@@ -164,13 +163,14 @@ class MainWindow:
 
         self.job_desc_search_frame = ttk.Labelframe(self.main_frame, text="Job Description")
         self.job_desc_search_frame.grid(column=2, row=1, sticky=(N, S, E, W))
-        self.searched_desc = StringVar()
-        self.job_desc_disp = ttk.Label(self.job_desc_search_frame, textvariable=self.searched_desc, wraplength=500)
+        # self.searched_desc = StringVar()
+        self.job_desc_disp = Text(self.job_desc_search_frame, width=70, height=30)
         self.job_desc_disp.grid(column=0, row=0, sticky=(N, S, E, W))
-        self.searched_desc.set('Something')
+        self.job_desc_disp.insert('1.0', 'Something')
         self.job_desc_scroll_bar = ttk.Scrollbar(self.job_desc_search_frame, orient='vertical', command=self.job_desc_disp.yview)
         self.job_desc_scroll_bar.grid(column=1, row=0, sticky=NSEW)
         self.job_desc_disp['yscrollcommand'] = self.job_desc_scroll_bar.set
+        # self.job_desc_disp['state'] = 'disabled'
 
 
         # CONTROLS FOR INPUT # Column 0, Row 2
@@ -329,9 +329,8 @@ class JobAddWindow():
 
 
 def save_data():
-    filename = filedialog.asksaveasfilename(initialfile='job_search.csv', defaultextension=".csv",filetypes=[("All Files","*.*"),("Comma-Seperated Values","*.csv")])
-    with open(filename, 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile, quotechar='|', quoting=csv.QUOTE_MINIMAL)
-        writer.writerow(['Title', 'Description', 'Company', 'Salary', 'Skills', 'Tasks'])
-        for i in jobs:
-            writer.writerow([i.title, i.description, i.company, i.salary, i.skills, i.task_list])
+    filename = filedialog.asksaveasfilename(initialfile='job_search.json', defaultextension=".json",filetypes=[("All Files","*.*"),("JSON","*.json")])
+    for i in jobs:
+        with open(filename, 'w', encoding='utf-8') as f:
+            json_boi = json.dumps(i)
+            json.dump(json_boi, f, ensure_ascii=False, indent=4)

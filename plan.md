@@ -7,51 +7,49 @@ Program to track / manage job search. Could grow to include database of frequent
 1. Track jobs / Save them locally
 2. Searchable
 3. Checkpoints / Trackable states
-    - Ability to track progress
-    - Ability to close jobs
+   - ~~Ability to track progress~~
+   - Ability to close jobs
 4. Company Info
-    - Goals / Motto
-    - Industry
-    - Website link
+   - Goals / Motto
+   - Industry
+   - ~~Website link~~
 5. Job Description
-    - Tasks
-    - General description
-    - Notes
-    - Tech stack
+   - ~~Tasks~~
+   - ~~General description~~
+   - Notes
+   - Tech stack
 6. Salary given / Estimate / Industry range
 7. Place to store your Minimum Viable salary
 8. Who to reach out to
-9. Next steps for each application
+9. ~~Next steps for each application~~
 
 ## Nice to Have:
 
 1. Machine Learning Natural Language Processing to extract important info.
-    - Works by letting you just copy-paste job description
+   - Works by letting you just copy-paste job description
 2. Cover letter Writer / Template Filler
 3. Outreach writer / Template Filler
 4. Company database of frequent hireing processes.
-
 
 # Tech Stack
 
 1. Python
 2. SQL?
 3. Python Libraries:
-    - NLTK
-    - Numpy
-    - Pandas
-    - Beautiful Soup
+   - NLTK
+   - Numpy
+   - Pandas
+   - ~~Beautiful Soup~~
 
 # PLAN
 
-1. Web-Scraper
-    - find what data fields you want
-    - make db in SQLite
+1. ~~Web-Scraper~~ CANCELLED
 2. analysis
 3. Book
 4. ML model
 
 # STAGES
+
 Let's figure out what the stages of the job application process are.
 
 1. Apply

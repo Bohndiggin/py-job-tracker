@@ -1,9 +1,5 @@
-import nltk
-import os
-import sys
 from tkinter import *
 from tkinter import ttk
-from tkinter import filedialog
 from utils import *
 import seaborn as sns
 from matplotlib.backend_bases import key_press_handler
