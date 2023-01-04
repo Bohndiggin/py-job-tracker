@@ -8,14 +8,15 @@ from matplotlib.figure import Figure
 import pickle
 import spacy
 from spacy.matcher import PhraseMatcher
+import webbrowser
 
 spacy.prefer_gpu()
 nlp = spacy.load("en_core_web_sm")
-skills = 'jz_skill_patterns.jsonl'
+skills_list = 'jz_skill_patterns.jsonl'
 
 matcher = PhraseMatcher(nlp.vocab)
 
-ruler = nlp.add_pipe("entity_ruler", before='ner').from_disk('jz_skill_patterns.jsonl')
+ruler = nlp.add_pipe("entity_ruler", before='ner').from_disk(skills_list)
 
 version_num = 0.01
 
@@ -46,14 +47,14 @@ jobs = []
 jobs_data = []
 
 class Job:
-    def __init__(self, title, description, company, skills, frame, jobs_var, jobs_listbox, **kwargs) -> None:
+    def __init__(self, title, description, company, skills, frame, jobs_var, jobs_listbox, job_skill_box,  **kwargs) -> None:
         self.id = len(jobs)
         self.title = title
         self.description = description
         self.company = company
         self.salary = kwargs.get('salary', None)
-        self.skills = skills
         self.frame = frame
+        self.skills = [Skill(len(jobs), ent[0], job_skill_box, self) for ent in skills]
         self.task_list = []
         self.task_complete_dict = {}
         self.task_values = {}
@@ -76,8 +77,12 @@ class Job:
     def show_tasks(self):
         for i in self.task_list:
             i.show()
+        for i in self.skills:
+            i.show()
     def hide_tasks(self):
         for i in self.task_list:
+            i.hide()
+        for i in self.skills:
             i.hide()
     def add_task(self, desc):
         atw = Toplevel()
@@ -98,37 +103,44 @@ class Job:
 
 
 class Skill:
-    def __init__(self, job_id, name) -> None:
+    def __init__(self, job_id, name, parent_frame, parent_obj) -> None:
         self.job_id = job_id
+        self.skill_id = 0
         self.name = name
+        self.parent_frame = parent_frame
+        # self.skill_disp = ttk.Label(self.parent_frame, text=self.name)
+        # self.skill_disp.pack(side=LEFT)
+
     def __repr__(self) -> str:
         return f'{self.name} is a skill needed for Job {self.job_id}'
-    def display(self):
-        SkillDisplay(self.name)
-
-
-class SkillDisplay:
-    def __init__(self, name) -> None:
-        # self.parent_frame = parent_frame
-        self.name = name
-    def __repr__(self) -> str:
-        return f'{self.name} being displayed.'
+    
+    def show(self):
+        self.skill_disp = ttk.Label(self.parent_frame, text=self.name)
+        self.skill_disp.pack(side=LEFT)
+    def hide(self):
+        try:
+            self.skill_disp.destroy()
+        except:
+            pass
 
 def update_info(id, job_desc_disp, title_disp_var, company_name_var, salary_disp_var):
     indx = id[0]
     for i in jobs:
         i.hide_tasks()
     jobs[indx].show_tasks()
+    job_desc_disp['state'] = 'normal'
     job_desc_disp.delete('1.0', 'end')
     job_desc_disp.insert('1.0', jobs[indx].description)
+    job_desc_disp['state'] = 'disabled'
     title_disp_var.set(jobs[indx].title)
     company_name_var.set(jobs[indx].company)
+
     if jobs[indx]:
         salary_disp_var.set(jobs[indx].salary)
     else:
         pass
 
-def weight_assign( object, x=1, y=1):
+def weight_assign(object, x=1, y=1):
     size = object.grid_size()
     for i in range(size[0]):
         object.columnconfigure(i, weight=x)
@@ -140,6 +152,8 @@ class MainWindow:
         self.main_frame = ttk.Frame(root)
         self.main_frame['padding'] = 5
         self.main_frame.grid(column=0, row=0, sticky=(N, S, E, W))
+
+        self.root = root
 
         #  WELCOME SECTION # Column 0, Row 0
 
@@ -210,14 +224,14 @@ class MainWindow:
         self.next_steps_controls_remove_task_btn.grid(column=1, row=0, sticky=NSEW)
 
 
-        # SEARCHED JOB SKILLS # Column 2, Row 2
+        # JOB SKILLS # Column 2, Row 2
 
-        self.searched_skills_frame = ttk.Labelframe(self.main_frame, text="Job Skills")
-        self.searched_skills_frame.grid(column=2, row=2, sticky=NSEW)
+        self.skills_frame = ttk.Labelframe(self.main_frame, text="Job Skills")
+        self.skills_frame.grid(column=2, row=2, sticky=NSEW)
 
-        new_job = Job('coder', 'be coder boiiii', 'apple', ['yoga', 'putting up with crap'], self.next_steps_frame, self.jobs_var, self.jobs_listbox)
-        new_job2 = Job('coder', 'be coder boiiii', 'apple', ['yoga', 'putting up with crap'], self.next_steps_frame, self.jobs_var, self.jobs_listbox, salary=250000)
-        new_job3 = Job('coder', 'be coder boiiii', 'apple', ['yoga', 'putting up with crap'], self.next_steps_frame, self.jobs_var, self.jobs_listbox)
+        new_job = Job('coder', 'be coder boiiii', 'apple', [('yoga', 'x'), ('putting up with crap', 'x')], self.next_steps_frame, self.jobs_var, self.jobs_listbox, self.skills_frame)
+        new_job2 = Job('coder', 'be coder boiiii', 'apple', [('yoga', 'x'), ('putting up with crap', 'x')], self.next_steps_frame, self.jobs_var, self.jobs_listbox, self.skills_frame, salary=250000)
+        new_job3 = Job('coder', 'be coder boiiii', 'apple', [('yoga', 'x'), ('putting up with crap', 'x')], self.next_steps_frame, self.jobs_var, self.jobs_listbox, self.skills_frame)
 
         root.option_add('*tearOff', FALSE)
         menubar = Menu(root)
@@ -323,15 +337,19 @@ class JobAddWindow():
         self.job_desc_input_paste_frame.grid(column=0, row=0, sticky=(N, S, E, W))
         self.job_desc_input_text = Text(self.job_desc_input_paste_frame, width=70, height=30)
         self.job_desc_input_text.grid(column=0, row=0, sticky=(N, S, E, W))
+        self.popup_menu = Menu(self.ja, tearoff=0)
+        self.popup_menu.add_command(label="Paste", command=self.paste)
+        self.popup_menu.add_command(label="Select All", command=self.select_all)
+        self.job_desc_input_text.bind('<Button-3>', self.right_click_menu)
         
         weight_assign(self.job_desc_input_paste_frame)
         
         self.ja_button_frame = ttk.Frame(self.ja)
         self.ja_button_frame.grid(column=1, row=2, sticky=NSEW)
-        self.ja_button_close = ttk.Button(self.ja_button_frame, text='Cancel', command=self.close_ja_window)
-        self.ja_button_close.grid(column=1, row=0, sticky=NSEW)
         self.ja_button_add = ttk.Button(self.ja_button_frame, text='Add', command=self.job_add_button_clicked)
         self.ja_button_add.grid(column=0, row=0, sticky=NSEW)
+        self.ja_button_close = ttk.Button(self.ja_button_frame, text='Cancel', command=self.close_ja_window)
+        self.ja_button_close.grid(column=1, row=0, sticky=NSEW)
 
     def job_add_button_clicked(self):
         # Entity Extraction here
@@ -339,13 +357,37 @@ class JobAddWindow():
         doc = nlp(text=desc)
         labels = [(ent.text, ent.label_) for ent in doc.ents]
         skills = [ent for ent in labels if ent[1] == 'SKILL']
-        skill_objs = [Skill(len(jobs), ent[0]) for ent in skills]
+        # skill_objs = [Skill(len(jobs), ent[0]) for ent in skills]
         # job_add_reply(ja_title.get(), job_desc_input_text.get('1.0', 'end'), ja_job_company.get(), skills=['nothing yet'])
-        Job(self.ja_title.get(), self.job_desc_input_text.get('1.0', 'end'), self.ja_job_company_entry.get(), skills=skill_objs, frame=self.momma.next_steps_frame, jobs_var=self.momma.jobs_var, jobs_listbox=self.momma.jobs_listbox)
+        Job(self.ja_title.get(), self.job_desc_input_text.get('1.0', 'end'), self.ja_job_company_entry.get(), skills=skills, frame=self.momma.next_steps_frame, jobs_var=self.momma.jobs_var, jobs_listbox=self.momma.jobs_listbox, job_skill_box=self.momma.skills_frame)
         print(jobs[len(jobs)-1].skills)
 
     def close_ja_window(self):
         self.ja.destroy()
+    
+    def right_click_menu(self, event):
+        try:
+            self.popup_menu.tk_popup(event.x_root, event.y_root, 0)
+        finally:
+            self.popup_menu.grab_release()
+    def paste(self):
+        self.job_desc_input_text.delete('1.0', 'end')
+        self.job_desc_input_text.insert('1.0', self.momma.root.clipboard_get())
+    def select_all(self):
+        self.job_desc_input_text.tag_add('sel','1.0', 'end')
+
+
+def stripe(listbox):
+    for i in range(0, len(jobs), 2):
+        listbox.itemconfigure(i, background='#f0f0ff')
+
+class RemoveJobWindow:
+    def __init__(self) -> None:
+        self.rjw = Toplevel()
+        self.rjw.title(f"Py Job Search {version_num} (JOB REMOVE)")
+        self.rjw.minsize(900, 500)
+        self.rjw.columnconfigure(0, weight=1)
+        self.rjw.rowconfigure(0, weight=1)
 
 
 def save_data():
