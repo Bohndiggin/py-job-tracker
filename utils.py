@@ -5,10 +5,9 @@ import seaborn as sns
 from matplotlib.backend_bases import key_press_handler
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
-import csv
+import pickle
 import spacy
 from spacy.matcher import PhraseMatcher
-import json
 
 spacy.prefer_gpu()
 nlp = spacy.load("en_core_web_sm")
@@ -16,7 +15,7 @@ skills = 'jz_skill_patterns.jsonl'
 
 matcher = PhraseMatcher(nlp.vocab)
 
-ruler = nlp.add_pipe("entity_ruler", before='ner').from_disk('./jz_skill_patterns.jsonl')
+ruler = nlp.add_pipe("entity_ruler", before='ner').from_disk('jz_skill_patterns.jsonl')
 
 version_num = 0.01
 
@@ -44,7 +43,7 @@ class Task:
         return f'{self.name}. A task associated with {self.parent_job}'
 
 jobs = []
-jobs2 = []
+jobs_data = []
 
 class Job:
     def __init__(self, title, description, company, skills, frame, jobs_var, jobs_listbox, **kwargs) -> None:
@@ -71,6 +70,7 @@ class Job:
         jobs.append(self)
         # jobs2.append(f'{self.title} at {self.company}')
         jobs_var.set(jobs)
+        self.saveable = [self.title, self.description, self.company, self.salary, self.skills]
         if len(jobs) % 2 == 0:
             jobs_listbox.itemconfigure(len(jobs)-1, background='#f0f0ff')
     def show_tasks(self):
@@ -85,6 +85,16 @@ class Job:
         Task(desc, self.frame, self)
     def __repr__(self) -> str:
         return f'{self.title} at {self.company}'
+    def wrap_data(self):
+        job_data_wrapped = {
+            'id': self.id,
+            'title': self.title,
+            'description': self.description,
+            'company': self.company,
+            'skills': [i for i in self.skills],
+            'tasks': [i for i in self.task_list]
+        }
+        return job_data_wrapped
 
 
 class Skill:
@@ -93,6 +103,16 @@ class Skill:
         self.name = name
     def __repr__(self) -> str:
         return f'{self.name} is a skill needed for Job {self.job_id}'
+    def display(self):
+        SkillDisplay(self.name)
+
+
+class SkillDisplay:
+    def __init__(self, name) -> None:
+        # self.parent_frame = parent_frame
+        self.name = name
+    def __repr__(self) -> str:
+        return f'{self.name} being displayed.'
 
 def update_info(id, job_desc_disp, title_disp_var, company_name_var, salary_disp_var):
     indx = id[0]
@@ -329,8 +349,10 @@ class JobAddWindow():
 
 
 def save_data():
-    filename = filedialog.asksaveasfilename(initialfile='job_search.json', defaultextension=".json",filetypes=[("All Files","*.*"),("JSON","*.json")])
-    for i in jobs:
-        with open(filename, 'w', encoding='utf-8') as f:
-            json_boi = json.dumps(i)
-            json.dump(json_boi, f, ensure_ascii=False, indent=4)
+    filename = filedialog.asksaveasfilename(initialfile='job_search.json', defaultextension=".json",filetypes=[("All Files","*.*"),("JAVASCRIPT OBJECT NOTATION","*.json")])
+    with open(filename, 'wb') as f:
+        # for i in jobs:
+        pickle.dump(jobs[0].wrap_data(), f, pickle.HIGHEST_PROTOCOL)
+
+def load_data():
+    pass
