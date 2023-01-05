@@ -1,6 +1,6 @@
 from tkinter import *
 from tkinter import ttk
-from utils import *
+from utils2 import *
 import seaborn as sns
 from matplotlib.backend_bases import key_press_handler
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -30,7 +30,7 @@ def setup():
     main_window.weight_assign(main_window.job_desc_search_frame)
     main_window.weight_assign(main_window.next_steps_controls_frame)
     main_window.weight_assign(main_window.add_jobs_btn_frame)
-    print(jobs[0].wrap_data())
+    main_window.populate_listbox()
 
 if __name__ == "__main__":
     setup()

@@ -22,126 +22,58 @@ ruler = nlp.add_pipe("entity_ruler", before='ner').from_disk(skills_list)
 
 version_num = 0.01
 
-class Task:
-    def __init__(self, name, parent_frame, parent_job):
-        self.name = name
-        self.parent_job = parent_job
-        self.parent_job.task_list.append(self)
-        self.parent_frame = parent_frame
-        self.task_id = len(self.parent_job.task_list)
-        self.parent_job.task_complete_dict[self.name] = 0
-        self.completed = IntVar()
-        self.completed.set(self.parent_job.task_complete_dict[self.name])
-        self.parent_job.task_values[self.name] = self.completed
-        self.task_check_box = ttk.Checkbutton(self.parent_frame, text=self.name, variable=self.completed)
-        self.task_check_box.grid(column=0, row=(len(self.parent_job.task_list)), sticky=(E, W))
-    def complete_task(self):
-        self.completed = 1
-    def show(self):
-        self.task_check_box = ttk.Checkbutton(self.parent_frame, text=self.name, variable=self.completed)
-        self.task_check_box.grid(column=0, row=self.parent_job.task_list.index(self), sticky=(E, W))
-    def hide(self):
-        self.task_check_box.destroy()
-    def __repr__(self) -> str:
-        return f'{self.name}. A task associated with {self.parent_job}'
-
 jobs = []
-jobs_data = []
-
-class Job:
-    def __init__(self, title, description, company, skills, frame, jobs_var, jobs_listbox, job_skill_box, site, **kwargs) -> None:
-        self.id = len(jobs)
-        self.title = title
-        self.description = description
-        self.company = company
-        self.salary = kwargs.get('salary', None)
-        self.frame = frame
-        self.skills = [Skill(len(jobs), ent[0], job_skill_box, self) for ent in skills]
-        self.site = site
-        self.task_list = []
-        self.task_complete_dict = {}
-        self.task_values = {}
-        Task('Finish Applying', frame, self) # Need to list out all the tasks of a job search and include custom stages
-        Task('Contact Hireing Manager', frame, self)
-        # Task('Contact Hireing Manager', frame, self)
-        Task('Phone Screen', frame, self)
-        Task('Interview', frame, self)
-        Task('Interview', frame, self)
-        Task('Technical Assessments', frame, self)
-        Task('Additional Interview', frame, self)
-        Task('Offer Extension', frame, self)
-        Task('Acceptance!', frame, self)
-        jobs.append(self)
-        # jobs2.append(f'{self.title} at {self.company}')
-        jobs_var.set(jobs)
-        self.saveable = [self.title, self.description, self.company, self.salary, self.skills]
-        if len(jobs) % 2 == 0:
-            jobs_listbox.itemconfigure(len(jobs)-1, background='#f0f0ff')
-    def show_tasks(self):
-        for i in self.task_list:
-            i.show()
-        for i in self.skills:
-            i.show()
-    def hide_tasks(self):
-        for i in self.task_list:
-            i.hide()
-        for i in self.skills:
-            i.hide()
-    def add_task(self, desc):
-        Task(desc, self.frame, self)
-    def __repr__(self) -> str:
-        return f'{self.title} at {self.company}'
-    def wrap_data(self):
-        job_data_wrapped = {
-            'id': self.id,
-            'title': self.title,
-            'description': self.description,
-            'company': self.company,
-            'skills': [i for i in self.skills],
-            'tasks': [i for i in self.task_list]
-        }
-        return job_data_wrapped
-    def remove_job(self):
-        print(f'removing {self}')
-
 
 class Skill:
-    def __init__(self, job_id, name, parent_frame, parent_obj) -> None:
-        self.job_id = job_id
-        self.skill_id = 0
-        self.name = name
-        self.parent_frame = parent_frame
-        # self.skill_disp = ttk.Label(self.parent_frame, text=self.name)
-        # self.skill_disp.pack(side=LEFT)
-
+    def __init__(self, parent_job, desc) -> None:
+        self.parent = parent_job
+        self.desc = desc
     def __repr__(self) -> str:
-        return f'{self.name} is a skill needed for Job {self.job_id}'
-    
-    def show(self):
-        self.skill_disp = ttk.Label(self.parent_frame, text=self.name)
-        self.skill_disp.pack(side=LEFT)
-    def hide(self):
-        try:
-            self.skill_disp.destroy()
-        except:
-            pass
+        return f'{self.desc} a skill for {self.parent.title} at {self.parent.company}'
 
-def update_info(id, job_desc_disp, title_disp_var, company_name_var, salary_disp_var, company_site_var):
-    indx = id[0]
-    for i in jobs:
-        i.hide_tasks()
-    jobs[indx].show_tasks()
-    job_desc_disp['state'] = 'normal'
-    job_desc_disp.delete('1.0', 'end')
-    job_desc_disp.insert('1.0', jobs[indx].description)
-    job_desc_disp['state'] = 'disabled'
-    title_disp_var.set(jobs[indx].title)
-    company_name_var.set(jobs[indx].company)
-    company_site_var.set(jobs[indx].site)
-    if jobs[indx]:
-        salary_disp_var.set(jobs[indx].salary)
-    else:
-        pass
+class Task:
+    def __init__(self, parent_job, desc) -> None:
+        self.parent = parent_job
+        self.desc = desc
+        self.parent.task_complete_dict[self.desc] = 0
+        self.status = IntVar() ### BROKEN!! TODO fix the saving system
+        self.status.set(self.parent.task_complete_dict[self.desc])
+        self.parent.task_values[self.desc] = self.status
+    def __repr__(self) -> str:
+        return f'{self.desc} a task for {self.parent.title} at {self.parent.company}'
+
+class Job:
+    def __init__(self, title, desc, company, site, salary, skills) -> None:
+        self.id = len(jobs)
+        self.title = title
+        self.desc = desc
+        self.company = company
+        self.site = site
+        self.salary = salary
+        self.skills = [Skill(self, skill) for skill in skills]
+        tasks = [
+            'Finish Applying',
+            'Contact Hireing Manager',
+            'Phone Screen',
+            'Interview',
+            'Technical Assessments',
+            'Additional Interview',
+            'Offer Extension',
+            'Acceptance!'
+        ]
+        self.task_complete_dict = {}
+        self.task_values = {}
+        self.tasks = [Task(self, task) for task in tasks]
+        jobs.append(self)
+    def __repr__(self) -> str:
+        return f'{self.title} at {self.company}'
+    def remove_job(self):
+        jobs.remove(jobs[self.id])
+    def add_task(self, desc):
+        self.tasks.append(Task(self, desc=desc))
+    def add_skill(self, desc):
+        self.skills.append(Skill(self, desc=desc))
+
 
 def weight_assign(object, x=1, y=1):
     size = object.grid_size()
@@ -149,7 +81,7 @@ def weight_assign(object, x=1, y=1):
         object.columnconfigure(i, weight=x)
     for j in range(size[1]):
         object.rowconfigure(j, weight=y)
-        
+
 class MainWindow:
     def __init__(self, root) -> None:
         self.main_frame = ttk.Frame(root)
@@ -192,7 +124,7 @@ class MainWindow:
         self.jobs_listbox_frame.grid(column=0, row=1, sticky=NSEW)
         self.jobs_listbox = Listbox(self.jobs_listbox_frame, height=30, listvariable=self.jobs_var)
         self.jobs_listbox.grid(column=0, row=0, sticky=NSEW)
-        self.jobs_listbox.bind('<<ListboxSelect>>', lambda e: update_info(self.jobs_listbox.curselection(), self.job_desc_disp, self.title_disp_var, self.company_name_var, self.salary_disp_var, self.company_site_var))
+        self.jobs_listbox.bind('<<ListboxSelect>>', lambda e: self.update(self.jobs_listbox.curselection()))
 
         # NEXT STEPS SECTION # Column 1, row 1
 
@@ -235,9 +167,9 @@ class MainWindow:
         self.skills_frame = ttk.Labelframe(self.main_frame, text="Job Skills")
         self.skills_frame.grid(column=2, row=2, sticky=NSEW)
 
-        new_job = Job('coder', 'be coder boiiii', 'apple', [('yoga', 'x'), ('putting up with crap', 'x')], self.next_steps_frame, self.jobs_var, self.jobs_listbox, self.skills_frame, 'www.apple.com')
-        new_job2 = Job('coder', 'be coder boiiii', 'apple', [('yoga', 'x'), ('putting up with crap', 'x')], self.next_steps_frame, self.jobs_var, self.jobs_listbox, self.skills_frame, 'www.apple.com', salary=250000)
-        new_job3 = Job('coder', 'be coder boiiii', 'apple', [('yoga', 'x'), ('putting up with crap', 'x')], self.next_steps_frame, self.jobs_var, self.jobs_listbox, self.skills_frame, 'www.apple.com')
+        test_job_1 = Job('Developer', 'Be a coder', 'apple', 'www.apple.com', '50000', ['yoga', 'putting up with shit'])
+        test_job_2 = Job('Developer', 'Be a coder', 'apple', 'www.apple.com', '50000', ['yoga', 'putting up with shit'])
+        test_job_3 = Job('Developer', 'Be a coder', 'apple', 'www.apple.com', '50000', ['yoga', 'putting up with shit'])
 
         root.option_add('*tearOff', FALSE)
         menubar = Menu(root)
@@ -250,55 +182,40 @@ class MainWindow:
         menu_file.add_command(label='Open...', command=placeholder_command)
         menu_file.add_command(label='Save', command=save_data)
 
+    def populate_listbox(self):
+        self.jobs_var.set(jobs)
+        stripe(self.jobs_listbox)
+
+
     def weight_assign(self, object, x=1, y=1):
         size = object.grid_size()
         for i in range(size[0]):
             object.columnconfigure(i, weight=x)
         for j in range(size[1]):
             object.rowconfigure(j, weight=y)
+    def update(self, index):
+        indx = index[0]
+        self.job_desc_disp['state'] = 'normal'
+        self.job_desc_disp.delete('1.0', 'end')
+        self.job_desc_disp.insert('1.0', jobs[indx].desc)
+        self.job_desc_disp['state'] = 'disabled'
+        self.title_disp_var.set(jobs[indx].title)
+        self.company_name_var.set(jobs[indx].company)
+        self.company_site_var.set(jobs[indx].site)
+        self.salary_disp_var.set(jobs[indx].salary)
+        try:
+            self.task_check_box.destroy()
+        except:
+            print('no tasks yet')
+        for i in jobs[indx].tasks:
+            self.task_check_box = ttk.Checkbutton(self.next_steps_frame, text=i.desc, variable=i.status)
+            self.task_check_box.grid(column=0, row=jobs[indx].tasks.index(i), sticky=(E, W))
+
     def job_add_window(self):
-        ja_window = JobAddWindow(self)
+        JobAddWindow(self)
+    
     def task_add_btn(self):
         TaskAddWindow(momma=self, job=self.jobs_listbox.curselection())
-    def remove_task_btn(self):
-        RemoveTaskWindow(momma=self, job=self.jobs_listbox.curselection())
-
-class TaskAddWindow():
-    def __init__(self, momma, job) -> None:  
-        self.taw = Toplevel()
-        self.taw.title(f"Py Job Search {version_num} (TASK ADD)")
-        # self.taw.minsize(500, 300)
-        self.taw.columnconfigure(0, weight=1)
-        self.taw.rowconfigure(0, weight=1)
-
-        self.momma = momma
-        self.indx = job[0]
-        self.job = jobs[self.indx]
-
-        self.taw_frame = ttk.Frame(self.taw)
-        self.taw_frame.grid(column=0, row=0, sticky=NSEW)
-
-        self.taw_task_add_label = ttk.Label(self.taw_frame, text="Add Task:")
-        self.taw_task_add_label.grid(column=0, row=0, sticky=NSEW)
-
-        self.task_to_add = StringVar()
-
-        self.taw_task_add_entry = ttk.Entry(self.taw_frame, textvariable=self.task_to_add)
-        self.taw_task_add_entry.grid(column=1, row=0, sticky=NSEW)
-
-        self.taw_task_add_btn = ttk.Button(self.taw_frame, text='Add', command=lambda: self.job.add_task(self.task_to_add.get()))
-        self.taw_task_add_btn.grid(column=2, row=0, sticky=NSEW)
-
-        self.taw_cancel_button = ttk.Button(self.taw_frame, text='Cancel', command=self.close_taw)
-        self.taw_cancel_button.grid(column=3, row=0, sticky=NSEW)
-
-    def close_taw(self):
-        self.taw.destroy()
-
-
-
-def placeholder_command():
-    pass
 
 class JobAddWindow():
     def __init__(self, momma) -> None:
@@ -367,9 +284,8 @@ class JobAddWindow():
         doc = nlp(text=desc)
         labels = [(ent.text, ent.label_) for ent in doc.ents]
         skills = [ent for ent in labels if ent[1] == 'SKILL']
-        # skill_objs = [Skill(len(jobs), ent[0]) for ent in skills]
-        # job_add_reply(ja_title.get(), job_desc_input_text.get('1.0', 'end'), ja_job_company.get(), skills=['nothing yet'])
-        Job(self.ja_title.get(), self.job_desc_input_text.get('1.0', 'end'), self.ja_job_company_entry.get(), skills=skills, frame=self.momma.next_steps_frame, jobs_var=self.momma.jobs_var, jobs_listbox=self.momma.jobs_listbox, job_skill_box=self.momma.skills_frame, site=self.ja_job_site_entry.get(), salary=self.ja_job_salary_entry.get())
+        Job(self.ja_title.get(), self.job_desc_input_text.get('1.0', 'end'), self.ja_job_company_entry.get(), skills=skills, site=self.ja_job_site_entry.get(), salary=self.ja_job_salary_entry.get())
+        self.momma.populate_listbox()
         print(jobs[len(jobs)-1].skills)
 
     def close_ja_window(self):
@@ -386,48 +302,51 @@ class JobAddWindow():
     def select_all(self):
         self.job_desc_input_text.tag_add('sel','1.0', 'end')
 
-
-def stripe(listbox):
-    for i in range(0, len(jobs), 2):
-        listbox.itemconfigure(i, background='#f0f0ff')
-
-class JobRemoveWindow:
-    def __init__(self, momma) -> None:
-        self.jrw = Toplevel()
-        self.jrw.title(f"Py Job Search {version_num} (JOB REMOVE)")
-        self.jrw.minsize(900, 500)
-        self.jrw.columnconfigure(0, weight=1)
-        self.jrw.rowconfigure(0, weight=1)
-        
-        self.momma = momma
-
-        self.jrw_frame = ttk.Frame(self.jrw)
-        self.jrw_frame.grid(column=0, row=0, sticky=NSEW)
-
-        for i in jobs:
-            ttk.Button(self.jrw_frame, text=i, command=i.remove_job)
-
-class RemoveTaskWindow:
-    def __init__(self, momma, job) -> None:
-        self.rtw = Toplevel()
-        self.rtw.title(f"Py Job Search {version_num} (TASK REMOVE)")
-        self.rtw.columnconfigure(0, weight=1)
-        self.rtw.rowconfigure(0, weight=1)
+class TaskAddWindow():
+    def __init__(self, momma, job) -> None:  
+        self.taw = Toplevel()
+        self.taw.title(f"Py Job Search {version_num} (TASK ADD)")
+        # self.taw.minsize(500, 300)
+        self.taw.columnconfigure(0, weight=1)
+        self.taw.rowconfigure(0, weight=1)
 
         self.momma = momma
         self.indx = job[0]
         self.job = jobs[self.indx]
 
-        self.rtw_frame = ttk.Frame(self.rtw)
-        self.rtw_frame.grid(column=0, row=0, sticky=NSEW)
+        self.taw_frame = ttk.Frame(self.taw)
+        self.taw_frame.grid(column=0, row=0, sticky=NSEW)
 
-        self.rtw_listbox = Listbox()
+        self.taw_task_add_label = ttk.Label(self.taw_frame, text="Add Task:")
+        self.taw_task_add_label.grid(column=0, row=0, sticky=NSEW)
+
+        self.task_to_add = StringVar()
+
+        self.taw_task_add_entry = ttk.Entry(self.taw_frame, textvariable=self.task_to_add)
+        self.taw_task_add_entry.grid(column=1, row=0, sticky=NSEW)
+
+        self.taw_task_add_btn = ttk.Button(self.taw_frame, text='Add', command=self.add_task)
+        self.taw_task_add_btn.grid(column=2, row=0, sticky=NSEW)
+
+        self.taw_cancel_button = ttk.Button(self.taw_frame, text='Cancel', command=self.close_taw)
+        self.taw_cancel_button.grid(column=3, row=0, sticky=NSEW)
+
+    def close_taw(self):
+        self.taw.destroy()
+    def add_task(self):
+        self.job.add_task(self.task_to_add.get())
+        self.momma.update([self.indx, 'blank'])
+
+def placeholder_command():
+    pass
+
+def stripe(listbox):
+    for i in range(0, len(jobs), 2):
+        listbox.itemconfigure(i, background='#f0f0ff')
+
 
 def save_data():
     filename = filedialog.asksaveasfilename(initialfile='job_search.json', defaultextension=".json",filetypes=[("All Files","*.*"),("JAVASCRIPT OBJECT NOTATION","*.json")])
     with open(filename, 'wb') as f:
         # for i in jobs:
-        pickle.dump(jobs[0].wrap_data(), f, pickle.HIGHEST_PROTOCOL)
-
-def load_data():
-    pass
+        pickle.dump(jobs, f, pickle.HIGHEST_PROTOCOL)
