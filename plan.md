@@ -22,6 +22,7 @@ Program to track / manage job search. Could grow to include database of frequent
 7. Place to store your Minimum Viable salary
 8. Who to reach out to
 9. ~~Next steps for each application~~
+10. Section with good Questions to ask in phone interviews
 
 ## Nice to Have:
 

@@ -11,7 +11,7 @@ sns.set()
 version_num = 0.01
 
 root = Tk()
-root.title(f"Py Job Search {version_num} (DASHBOARD)")
+root.title(f"Py Job Coach {version_num} (DASHBOARD)")
 root.minsize(900, 500)
 root.columnconfigure(0, weight=1)
 root.rowconfigure(0, weight=1)

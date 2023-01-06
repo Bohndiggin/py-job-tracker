@@ -20,7 +20,7 @@ matcher = PhraseMatcher(nlp.vocab)
 
 ruler = nlp.add_pipe("entity_ruler", before='ner').from_disk(skills_list)
 
-version_num = 0.01
+version_num = 0.10
 
 jobs = []
 
@@ -151,6 +151,8 @@ class MainWindow:
         self.add_jobs_btn_frame.grid(column=0, row=2, sticky=(N, S, E, W))
         self.add_jobs_btn = ttk.Button(self.add_jobs_btn_frame, text='Add Jobs', command=self.job_add_window)
         self.add_jobs_btn.grid(column=0, row=0, sticky=(N, S, E, W))
+        self.remove_jobs_btn = ttk.Button(self.add_jobs_btn_frame, text='Remove Jobs', command=lambda: JobRemoveWindow(self))
+        self.remove_jobs_btn.grid(column=1, row=0, sticky=NSEW)
 
         # CONTROLS FOR NEXT STEPS SECTION # Column 1, Row 2
 
@@ -158,7 +160,7 @@ class MainWindow:
         self.next_steps_controls_frame.grid(column=1, row=2, sticky=(N, S, E, W))
         self.next_steps_controls_add_task_btn = ttk.Button(self.next_steps_controls_frame, text='Add Task', command=self.task_add_btn)
         self.next_steps_controls_add_task_btn.grid(column=0, row=0, sticky=NSEW)
-        self.next_steps_controls_remove_task_btn = ttk.Button(self.next_steps_controls_frame, text='Remove Task', command=placeholder_command)
+        self.next_steps_controls_remove_task_btn = ttk.Button(self.next_steps_controls_frame, text='Remove Task', command=lambda: RemoveTaskWindow(self, self.jobs_listbox.curselection()))
         self.next_steps_controls_remove_task_btn.grid(column=1, row=0, sticky=NSEW)
 
 
@@ -204,12 +206,25 @@ class MainWindow:
         self.company_site_var.set(jobs[indx].site)
         self.salary_disp_var.set(jobs[indx].salary)
         try:
-            self.task_check_box.destroy()
+            self.task_check_box_frame.destroy()
+            self.task_check_box_frame = ttk.Frame(self.next_steps_frame)
         except:
-            print('no tasks yet')
+            self.task_check_box_frame = ttk.Frame(self.next_steps_frame)
+        finally:
+            self.task_check_box_frame.grid(column=0, row=0, sticky=NSEW)
         for i in jobs[indx].tasks:
-            self.task_check_box = ttk.Checkbutton(self.next_steps_frame, text=i.desc, variable=i.status)
+            self.task_check_box = ttk.Checkbutton(self.task_check_box_frame, text=i.desc, variable=i.status)
             self.task_check_box.grid(column=0, row=jobs[indx].tasks.index(i), sticky=(E, W))
+        try:
+            self.skill_disp_frame.destroy()
+            self.skill_disp_frame = ttk.Frame(self.skills_frame)
+        except:
+            self.skill_disp_frame = ttk.Frame(self.skills_frame)
+        finally:
+            self.skill_disp_frame.grid(column=0, row=0, sticky=NSEW)
+        for i in jobs[indx].skills:
+            self.skill_disp = ttk.Label(self.skill_disp_frame, text=i.desc)
+            self.skill_disp.pack(side="left")
 
     def job_add_window(self):
         JobAddWindow(self)
@@ -220,7 +235,7 @@ class MainWindow:
 class JobAddWindow():
     def __init__(self, momma) -> None:
         self.ja = Toplevel()
-        self.ja.title(f"Py Job Search {version_num} (JOB ADD)")
+        self.ja.title(f"Py Job Coach {version_num} (JOB ADD)")
         self.ja.minsize(900, 500)
         self.ja.columnconfigure(0, weight=1)
         self.ja.rowconfigure(0, weight=1)
@@ -305,7 +320,7 @@ class JobAddWindow():
 class TaskAddWindow():
     def __init__(self, momma, job) -> None:  
         self.taw = Toplevel()
-        self.taw.title(f"Py Job Search {version_num} (TASK ADD)")
+        self.taw.title(f"Py Job Coach {version_num} (TASK ADD)")
         # self.taw.minsize(500, 300)
         self.taw.columnconfigure(0, weight=1)
         self.taw.rowconfigure(0, weight=1)
@@ -337,6 +352,54 @@ class TaskAddWindow():
         self.job.add_task(self.task_to_add.get())
         self.momma.update([self.indx, 'blank'])
 
+class JobRemoveWindow:
+    def __init__(self, momma) -> None:
+        self.jrw = Toplevel()
+        self.jrw.title(f"Py Job Coach {version_num} (JOB REMOVE)")
+        self.jrw.minsize(900, 500)
+        self.jrw.columnconfigure(0, weight=1)
+        self.jrw.rowconfigure(0, weight=1)
+        
+        self.momma = momma
+
+        self.jrw_frame = ttk.Frame(self.jrw)
+        self.jrw_frame.grid(column=0, row=0, sticky=NSEW)
+
+        for i in jobs:
+            ttk.Button(self.jrw_frame, text=i, command=lambda: self.job_remover(i)).pack(side='bottom')
+    def job_remover(self, job):
+        job.remove_job()
+        self.momma.populate_listbox()
+
+class RemoveTaskWindow:
+    def __init__(self, momma, job) -> None:
+        self.rtw = Toplevel()
+        self.rtw.title(f"Py Job Coach {version_num} (TASK REMOVE)")
+        self.rtw.minsize(900, 500)
+        self.rtw.columnconfigure(0, weight=1)
+        self.rtw.rowconfigure(0, weight=1)
+
+        self.momma = momma
+        self.indx = job[0]
+        self.job = jobs[self.indx]
+
+        self.rtw_frame = ttk.Frame(self.rtw)
+        self.rtw_frame.grid(column=0, row=0, sticky=NSEW)
+
+        self.rtw_task_list_var = StringVar(value=self.job.tasks)
+
+        self.rtw_listbox = Listbox(self.rtw_frame, height=30, listvariable=self.rtw_task_list_var)
+        self.rtw_listbox.grid(column=0, row=0, sticky=NSEW)
+
+        self.rtw_remove_btn = ttk.Button(self.rtw_frame, text='Remove', command=placeholder_command)
+        self.rtw_remove_btn.grid(column=1, row=0, sticky=NSEW)
+
+        self.rtw_cancel_btn = ttk.Button(self.rtw_frame, text='Cancel', command=self.close)
+        self.rtw_cancel_btn.grid(column=2, row=0, sticky=NSEW)
+
+    def close(self):
+        self.rtw.destroy()
+
 def placeholder_command():
     pass
 
@@ -344,9 +407,10 @@ def stripe(listbox):
     for i in range(0, len(jobs), 2):
         listbox.itemconfigure(i, background='#f0f0ff')
 
-
 def save_data():
     filename = filedialog.asksaveasfilename(initialfile='job_search.json', defaultextension=".json",filetypes=[("All Files","*.*"),("JAVASCRIPT OBJECT NOTATION","*.json")])
     with open(filename, 'wb') as f:
-        # for i in jobs:
         pickle.dump(jobs, f, pickle.HIGHEST_PROTOCOL)
+
+def load_data():
+    pass
