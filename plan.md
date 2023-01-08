@@ -4,7 +4,7 @@ Program to track / manage job search. Could grow to include database of frequent
 
 ## MVP:
 
-1. Track jobs / Save them locally
+1. ~~Track jobs / Save them locally~~
 2. Searchable
 3. Checkpoints / Trackable states
    - ~~Ability to track progress~~
@@ -16,7 +16,7 @@ Program to track / manage job search. Could grow to include database of frequent
 5. Job Description
    - ~~Tasks~~
    - ~~General description~~
-   - Notes
+   - ~~Notes~~
    - Tech stack
 6. Salary given / Estimate / Industry range
 7. Place to store your Minimum Viable salary
@@ -37,7 +37,7 @@ Program to track / manage job search. Could grow to include database of frequent
 1. Python
 2. SQL?
 3. Python Libraries:
-   - NLTK
+   - SpaCy
    - Numpy
    - Pandas
    - ~~Beautiful Soup~~

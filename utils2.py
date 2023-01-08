@@ -9,7 +9,6 @@ import pickle
 import spacy
 from spacy.matcher import PhraseMatcher
 import webbrowser
-import copy
 
 spacy.prefer_gpu()
 nlp = spacy.load("en_core_web_sm")
@@ -141,7 +140,7 @@ class MainWindow:
 
         self.jobs_var = StringVar(value=jobs)
         self.jobs_listbox_frame = ttk.Labelframe(self.main_frame, text='Jobs Applied To')
-        self.jobs_listbox_frame.grid(column=0, row=1, sticky=NSEW)
+        self.jobs_listbox_frame.grid(column=0, row=1, sticky=NSEW, rowspan=2)
         self.jobs_listbox = Listbox(self.jobs_listbox_frame, height=30, listvariable=self.jobs_var)
         self.jobs_listbox.grid(column=0, row=0, sticky=NSEW)
         self.jobs_listbox.bind('<<ListboxSelect>>', lambda e: self.listbox_updater())
@@ -149,40 +148,18 @@ class MainWindow:
         # NEXT STEPS SECTION # Column 1, row 1
 
         self.next_steps_frame = ttk.Labelframe(self.main_frame, text="Next Steps (tasks)")
-        self.next_steps_frame.grid(column=1, row=1, sticky=(N, S, E, W))
+        self.next_steps_frame.grid(column=1, row=1, sticky=(N, S, E, W), rowspan=2)
         
         # JOB DESCRIPTION OF SEARCH # Column 2, Row 1
 
         self.job_desc_search_frame = ttk.Labelframe(self.main_frame, text="Job Description")
         self.job_desc_search_frame.grid(column=2, row=1, sticky=(N, S, E, W))
-        # self.searched_desc = StringVar()
         self.job_desc_disp = Text(self.job_desc_search_frame, width=70, height=30)
         self.job_desc_disp.grid(column=0, row=0, sticky=(N, S, E, W))
         self.job_desc_disp.insert('1.0', 'Something')
         self.job_desc_scroll_bar = ttk.Scrollbar(self.job_desc_search_frame, orient='vertical', command=self.job_desc_disp.yview)
         self.job_desc_scroll_bar.grid(column=1, row=0, sticky=NSEW)
         self.job_desc_disp['yscrollcommand'] = self.job_desc_scroll_bar.set
-        # self.job_desc_disp['state'] = 'disabled'
-
-
-        # CONTROLS FOR INPUT # Column 0, Row 2
-
-        self.add_jobs_btn_frame = ttk.Labelframe(self.main_frame, text='Add Jobs')
-        self.add_jobs_btn_frame.grid(column=0, row=2, sticky=(N, S, E, W))
-        self.add_jobs_btn = ttk.Button(self.add_jobs_btn_frame, text='Add Jobs', command=self.job_add_window)
-        self.add_jobs_btn.grid(column=0, row=0, sticky=(N, S, E, W))
-        self.remove_jobs_btn = ttk.Button(self.add_jobs_btn_frame, text='Remove Jobs', command=lambda: JobRemoveWindow(self))
-        self.remove_jobs_btn.grid(column=1, row=0, sticky=NSEW)
-
-        # CONTROLS FOR NEXT STEPS SECTION # Column 1, Row 2
-
-        self.next_steps_controls_frame = ttk.Labelframe(self.main_frame, text='Next Steps Controls')
-        self.next_steps_controls_frame.grid(column=1, row=2, sticky=(N, S, E, W))
-        self.next_steps_controls_add_task_btn = ttk.Button(self.next_steps_controls_frame, text='Add Task', command=self.task_add_btn)
-        self.next_steps_controls_add_task_btn.grid(column=0, row=0, sticky=NSEW)
-        self.next_steps_controls_remove_task_btn = ttk.Button(self.next_steps_controls_frame, text='Remove Task', command=lambda: RemoveTaskWindow(self, self.jobs_listbox.curselection()))
-        self.next_steps_controls_remove_task_btn.grid(column=1, row=0, sticky=NSEW)
-
 
         # JOB SKILLS # Column 2, Row 2
 
@@ -211,11 +188,19 @@ class MainWindow:
         menu_file.add_command(label='New', command=placeholder_command)
         menu_file.add_command(label='Open...', command=load_data)
         menu_file.add_command(label='Save', command=lambda: save_data(self))
+        menu_file.add_command(label='Add Jobs', command=self.job_add_window)
+        menu_file.add_command(label='Remove Jobs', command=lambda: JobRemoveWindow(self))
+        
+        menu_edit.add_command(label='Add Task', command=self.task_add_btn)
+        menu_edit.add_command(label='Remove Task', command=lambda: RemoveTaskWindow(self, self.jobs_listbox.curselection()))
 
         self.popup_menu = Menu(self.main_frame, tearoff=0)
         self.popup_menu.add_command(label="Paste", command=self.paste)
         self.popup_menu.add_command(label="Select All", command=self.select_all)
         self.note_entry.bind('<Button-3>', self.right_click_menu)
+    
+        self.jobs_listbox.selection_set(0)
+        self.update((0, 1))
 
     def paste(self):
         self.note_entry.insert(INSERT, self.root.clipboard_get())
