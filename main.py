@@ -8,7 +8,7 @@ from matplotlib.figure import Figure
 
 sns.set()
 
-version_num = 0.01
+version_num = 0.10
 
 root = Tk()
 root.title(f"Py Job Coach {version_num} (DASHBOARD)")

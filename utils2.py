@@ -9,6 +9,7 @@ import pickle
 import spacy
 from spacy.matcher import PhraseMatcher
 import webbrowser
+import copy
 
 spacy.prefer_gpu()
 nlp = spacy.load("en_core_web_sm")
@@ -27,7 +28,7 @@ jobs = []
 class Skill:
     def __init__(self, parent_job, desc) -> None:
         self.parent = parent_job
-        self.desc = desc
+        self.desc = desc[0]
     def __repr__(self) -> str:
         return f'{self.desc} a skill for {self.parent.title} at {self.parent.company}'
 
@@ -39,8 +40,17 @@ class Task:
         self.status = IntVar() ### BROKEN!! TODO fix the saving system
         self.status.set(self.parent.task_complete_dict[self.desc])
         self.parent.task_values[self.desc] = self.status
+        # self.status = 0
     def __repr__(self) -> str:
         return f'{self.desc} a task for {self.parent.title} at {self.parent.company}'
+    def pack_it_up(self):
+        self.status = self.status.get()
+        self.parent.task_values[self.desc] = self.status
+    def unpack_it_down(self):
+        # self.parent.task_complete_dict[self.desc] = loaded_data
+        self.status = IntVar() ### BROKEN!! TODO fix the saving system
+        self.status.set(self.parent.task_complete_dict[self.desc])
+        self.parent.task_values[self.desc] = self.status
 
 class Job:
     def __init__(self, title, desc, company, site, salary, skills) -> None:
@@ -62,8 +72,9 @@ class Job:
             'Acceptance!'
         ]
         self.task_complete_dict = {}
-        self.task_values = {}
+        self.task_values = {} # task_values messes with the saving system TODO fix BUG
         self.tasks = [Task(self, task) for task in tasks]
+        self.notes = ''
         jobs.append(self)
     def __repr__(self) -> str:
         return f'{self.title} at {self.company}'
@@ -73,6 +84,15 @@ class Job:
         self.tasks.append(Task(self, desc=desc))
     def add_skill(self, desc):
         self.skills.append(Skill(self, desc=desc))
+    def add_notes(self, notes):
+        self.notes = notes
+    def pack_up(self):
+        for i in self.tasks:
+            i.pack_it_up()
+        self.task_complete_dict = self.task_values
+    def load_in(self):
+        for i in range(len(self.tasks)):
+            self.tasks[i].unpack_it_down()
 
 
 def weight_assign(object, x=1, y=1):
@@ -124,7 +144,7 @@ class MainWindow:
         self.jobs_listbox_frame.grid(column=0, row=1, sticky=NSEW)
         self.jobs_listbox = Listbox(self.jobs_listbox_frame, height=30, listvariable=self.jobs_var)
         self.jobs_listbox.grid(column=0, row=0, sticky=NSEW)
-        self.jobs_listbox.bind('<<ListboxSelect>>', lambda e: self.update(self.jobs_listbox.curselection()))
+        self.jobs_listbox.bind('<<ListboxSelect>>', lambda e: self.listbox_updater())
 
         # NEXT STEPS SECTION # Column 1, row 1
 
@@ -167,11 +187,19 @@ class MainWindow:
         # JOB SKILLS # Column 2, Row 2
 
         self.skills_frame = ttk.Labelframe(self.main_frame, text="Job Skills")
-        self.skills_frame.grid(column=2, row=2, sticky=NSEW)
+        self.skills_frame.grid(column=2, row=2, sticky=NSEW, columnspan=2)
 
-        test_job_1 = Job('Developer', 'Be a coder', 'apple', 'www.apple.com', '50000', ['yoga', 'putting up with shit'])
-        test_job_2 = Job('Developer', 'Be a coder', 'apple', 'www.apple.com', '50000', ['yoga', 'putting up with shit'])
-        test_job_3 = Job('Developer', 'Be a coder', 'apple', 'www.apple.com', '50000', ['yoga', 'putting up with shit'])
+        # NOTE ADD # Column 3, row 1
+
+        self.note_frame = ttk.Labelframe(self.main_frame, text='Notes:')
+        self.note_frame.grid(column=3, row=1, sticky=NSEW)
+
+        self.note_entry = Text(self.note_frame, width=35, height=30)
+        self.note_entry.grid(column=0, row=0, sticky=NSEW)
+
+        test_job_1 = Job('Developer', 'Be a coder', 'apple', 'www.apple.com', '50000', [('yoga', 'skill'), ('putting up with shit', 'SKILL')])
+        test_job_2 = Job('Developer', 'Be a coder', 'apple', 'www.apple.com', '50000', [('yoga', 'skill'), ('putting up with shit', 'SKILL')])
+        test_job_3 = Job('Developer', 'Be a coder', 'apple', 'www.apple.com', '50000', [('yoga', 'skill'), ('putting up with shit', 'SKILL')])
 
         root.option_add('*tearOff', FALSE)
         menubar = Menu(root)
@@ -181,8 +209,30 @@ class MainWindow:
         menubar.add_cascade(menu=menu_file, label='File')
         menubar.add_cascade(menu=menu_edit, label='Edit')
         menu_file.add_command(label='New', command=placeholder_command)
-        menu_file.add_command(label='Open...', command=placeholder_command)
-        menu_file.add_command(label='Save', command=save_data)
+        menu_file.add_command(label='Open...', command=load_data)
+        menu_file.add_command(label='Save', command=lambda: save_data(self))
+
+        self.popup_menu = Menu(self.main_frame, tearoff=0)
+        self.popup_menu.add_command(label="Paste", command=self.paste)
+        self.popup_menu.add_command(label="Select All", command=self.select_all)
+        self.note_entry.bind('<Button-3>', self.right_click_menu)
+
+    def paste(self):
+        self.note_entry.insert(INSERT, self.root.clipboard_get())
+    def select_all(self):
+        self.note_entry.tag_add('sel','1.0', 'end')
+    
+    def right_click_menu(self, event):
+        try:
+            self.popup_menu.tk_popup(event.x_root, event.y_root, 0)
+        finally:
+            self.popup_menu.grab_release()
+
+    def listbox_updater(self):
+        try:
+            jobs[self.previous_selection].add_notes(self.note_entry.get('1.0', 'end'))
+        finally:
+            self.update(self.jobs_listbox.curselection())
 
     def populate_listbox(self):
         self.jobs_var.set(jobs)
@@ -205,6 +255,8 @@ class MainWindow:
         self.company_name_var.set(jobs[indx].company)
         self.company_site_var.set(jobs[indx].site)
         self.salary_disp_var.set(jobs[indx].salary)
+        self.note_entry.delete('1.0', 'end')
+        self.note_entry.insert('1.0', jobs[indx].notes)
         try:
             self.task_check_box_frame.destroy()
             self.task_check_box_frame = ttk.Frame(self.next_steps_frame)
@@ -222,9 +274,10 @@ class MainWindow:
             self.skill_disp_frame = ttk.Frame(self.skills_frame)
         finally:
             self.skill_disp_frame.grid(column=0, row=0, sticky=NSEW)
-        for i in jobs[indx].skills:
-            self.skill_disp = ttk.Label(self.skill_disp_frame, text=i.desc)
+        for j in jobs[indx].skills:
+            self.skill_disp = ttk.Label(self.skill_disp_frame, text=j.desc)
             self.skill_disp.pack(side="left")
+        self.previous_selection = indx
 
     def job_add_window(self):
         JobAddWindow(self)
@@ -407,10 +460,30 @@ def stripe(listbox):
     for i in range(0, len(jobs), 2):
         listbox.itemconfigure(i, background='#f0f0ff')
 
-def save_data():
-    filename = filedialog.asksaveasfilename(initialfile='job_search.json', defaultextension=".json",filetypes=[("All Files","*.*"),("JAVASCRIPT OBJECT NOTATION","*.json")])
+def load_data(**kwargs):
+    global jobs
+    file_name = kwargs.get('filename', None)
+    if file_name:
+        with open(file_name, 'rb') as f:
+            jobs = pickle.load(f)
+        for i in jobs:
+            i.load_in()
+    else:
+        filename = filedialog.askopenfilename(initialfile='job_search.pysav', defaultextension=".pysav",filetypes=[("All Files","*.*"),("Py Save","*.pysav")])
+        with open(filename, 'rb') as f:
+            jobs = pickle.load(f)
+        for i in jobs:
+            i.load_in()
+
+    
+
+def save_data(parent):
+    filename = filedialog.asksaveasfilename(initialfile='job_search.pysav', defaultextension=".pysav",filetypes=[("All Files","*.*"),("Py Save","*.pysav")])
+    for i in jobs:
+        i.pack_up()
+
     with open(filename, 'wb') as f:
         pickle.dump(jobs, f, pickle.HIGHEST_PROTOCOL)
-
-def load_data():
-    pass
+    
+    load_data(filename=filename)
+    parent.update((0, 0))
