@@ -1,10 +1,6 @@
 from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog
-import seaborn as sns
-from matplotlib.backend_bases import key_press_handler
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.figure import Figure
 import pickle
 import spacy
 from spacy.matcher import PhraseMatcher
@@ -174,9 +170,9 @@ class MainWindow:
         self.note_entry = Text(self.note_frame, width=35, height=30)
         self.note_entry.grid(column=0, row=0, sticky=NSEW)
 
-        test_job_1 = Job('Developer', 'Be a coder', 'apple', 'www.apple.com', '50000', [('yoga', 'skill'), ('putting up with shit', 'SKILL')])
-        test_job_2 = Job('Developer', 'Be a coder', 'apple', 'www.apple.com', '50000', [('yoga', 'skill'), ('putting up with shit', 'SKILL')])
-        test_job_3 = Job('Developer', 'Be a coder', 'apple', 'www.apple.com', '50000', [('yoga', 'skill'), ('putting up with shit', 'SKILL')])
+        test_job_1 = Job('Developer1', 'Be a coder', 'apple', 'www.apple.com', '50000', [('yoga', 'skill'), ('putting up with shit', 'SKILL')])
+        test_job_2 = Job('Developer2', 'Be a coder', 'apple', 'www.apple.com', '50000', [('yoga', 'skill'), ('putting up with shit', 'SKILL')])
+        test_job_3 = Job('Developer3', 'Be a coder', 'apple', 'www.apple.com', '50000', [('yoga', 'skill'), ('putting up with shit', 'SKILL')])
 
         root.option_add('*tearOff', FALSE)
         menubar = Menu(root)
@@ -186,7 +182,7 @@ class MainWindow:
         menubar.add_cascade(menu=menu_file, label='File')
         menubar.add_cascade(menu=menu_edit, label='Edit')
         menu_file.add_command(label='New', command=placeholder_command)
-        menu_file.add_command(label='Open...', command=load_data)
+        menu_file.add_command(label='Open...', command=lambda: load_data(self))
         menu_file.add_command(label='Save', command=lambda: save_data(self))
         menu_file.add_command(label='Add Jobs', command=self.job_add_window)
         menu_file.add_command(label='Remove Jobs', command=lambda: JobRemoveWindow(self))
@@ -337,6 +333,7 @@ class JobAddWindow():
         doc = nlp(text=desc)
         labels = [(ent.text, ent.label_) for ent in doc.ents]
         skills = [ent for ent in labels if ent[1] == 'SKILL']
+        skills = [*set(skills)]
         Job(self.ja_title.get(), self.job_desc_input_text.get('1.0', 'end'), self.ja_job_company_entry.get(), skills=skills, site=self.ja_job_site_entry.get(), salary=self.ja_job_salary_entry.get())
         self.momma.populate_listbox()
         print(jobs[len(jobs)-1].skills)
@@ -445,7 +442,7 @@ def stripe(listbox):
     for i in range(0, len(jobs), 2):
         listbox.itemconfigure(i, background='#f0f0ff')
 
-def load_data(**kwargs):
+def load_data(parent, **kwargs):
     global jobs
     file_name = kwargs.get('filename', None)
     if file_name:
@@ -459,6 +456,8 @@ def load_data(**kwargs):
             jobs = pickle.load(f)
         for i in jobs:
             i.load_in()
+    parent.update((0, 0))
+    parent.populate_listbox()
 
     
 
@@ -470,5 +469,5 @@ def save_data(parent):
     with open(filename, 'wb') as f:
         pickle.dump(jobs, f, pickle.HIGHEST_PROTOCOL)
     
-    load_data(filename=filename)
-    parent.update((0, 0))
+    load_data(parent, filename=filename)
+    

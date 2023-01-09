@@ -8,7 +8,8 @@ Program to track / manage job search. Could grow to include database of frequent
 2. Searchable
 3. Checkpoints / Trackable states
    - ~~Ability to track progress~~
-   - Ability to close jobs
+   - ~~Ability to close jobs~~
+   - Ability to 'archive' jobs ??
 4. Company Info
    - Goals / Motto
    - Industry
