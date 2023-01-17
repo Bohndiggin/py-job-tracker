@@ -1,3 +1,14 @@
 training_data
 test.py
 spacy_test.py
+tech_stacker.py
+dist
+build
+main.spec
+.ipynb_checkpoints
+NLP-Test-checkpoint.ipynb
+NLP-Testing-20-Sample.ipynb
+NLP-Test.ipynb
+skill_patterns.jsonl
+skill_patterns2.jsonl
+skills_train.csv

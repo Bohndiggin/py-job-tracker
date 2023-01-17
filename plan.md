@@ -60,3 +60,8 @@ Let's figure out what the stages of the job application process are.
 4. Thank for interview. -MULTIPLE INTERVIEWS??
 5. Offer recieved
 6. Accepted.
+
+
+# NEXT STEPS:
+
+1. re-tool skill checker to tech stack detector instead It'll probably be more accurate
